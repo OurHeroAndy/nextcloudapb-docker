@@ -1,0 +1,58 @@
+# version: "3"
+
+services:
+  nextcloud-app:
+    build: .
+    image: nextcloud-smb
+    container_name: nextcloud-app
+    restart: unless-stopped
+    ports:
+      - "8085:80"
+    volumes:
+      - ./nextcloud/data:/var/www/html
+    depends_on:
+      - nextcloud-db
+    environment:
+      - MYSQL_PASSWORD=yourpassword
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextclouduser
+      - MYSQL_HOST=nextcloud-db
+    networks:
+      - nextcloud-net
+
+  nextcloud-db:
+    image: mariadb:10.6
+    container_name: nextcloud-db
+    restart: unless-stopped
+    volumes:
+      - ./nextcloud/db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=yourpassword
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextclouduser
+      - MYSQL_PASSWORD=yourpassword
+    networks:
+      - nextcloud-net
+
+  collabora:
+    image: collabora/code:latest
+    container_name: collabora
+    restart: unless-stopped
+    cap_add:
+      - MKNOD
+    environment:
+      - server_name=collabora
+      - domain=nextcloud\\.ourheroandy\\.org
+
+      - username=admin
+      - password=APBcollabora2025
+      - aliasgroup1=https://nextcloud.ourheroandy.org
+      - extra_params=--o:ssl.enable=false --o:ssl.termination=true
+    ports:
+      - "8087:9980"
+    networks:
+      - nextcloud-net
+
+networks:
+  nextcloud-net:
+    driver: bridge
